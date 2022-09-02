@@ -90,8 +90,12 @@ export function keyboard(editor: Editor) {
     const [ start, end ] = doc.getLineRange(at);
 
     // Allow the system to handle non-line-collapsing deletes
+    /*
+     * TANGENTMOD: this check for chrome breaks interactions with emoji & other unicode characters.
+     * I was unable to reproduce the mentioned issue. Removing it for Tangent's use for now.
+     */
     // (Bug in Chrome where backspace at the end of a span can delete an entire paragraph)
-    if (isCollapsed && (!IS_CHROME || event.ctrlKey || event.altKey || event.metaKey)) {
+    if (isCollapsed /*&& (!IS_CHROME || event.ctrlKey || event.altKey || event.metaKey)*/) {
       if (direction === -1 && at !== start) return;
       if (direction === 1 && at !== end - 1) return;
     }
