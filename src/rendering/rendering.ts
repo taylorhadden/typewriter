@@ -1,7 +1,7 @@
 import { isEqual, TextDocument, AttributeMap, Line, EditorRange, Delta, Op } from '@typewriter/document';
 import { h, patch, VChild, VNode } from './vdom';
 import Editor from '../Editor';
-import { LineType } from '../typesetting/typeset';
+import { FormatType, LineType } from '../typesetting/typeset';
 import { applyDecorations } from '../modules/decorations';
 
 const EMPTY_ARR = [];
@@ -195,14 +195,77 @@ export function getChangedRanges(oldC: Combined, newC: Combined): LineRanges {
   return [[ oldStart, oldEnd ], [ newStart, newEnd ]];
 }
 
+interface InlineStackItem {
+  type: FormatType
+  attributes: AttributeMap
+  content?: VChild[]
+}
 
 export function renderInline(editor: Editor, delta: Delta, forHTML?: boolean) {
   const { formats, embeds } = editor.typeset;
   let inlineChildren: VChild[] = [];
   let trailingBreak = true;
+  
+  // The stack allows parent formats to span multiple child formats at render() time
+  // This means that the FormatType has a complete understanding of its children and can
+  // add additional nodes before or after the actual children.
+  let activeStack: InlineStackItem[] = [];
+
+  // Render out all nodes up to the given index.
+  // A positive number means that rendered items will be appended to their parent.
+  function collapseStack(from = 0) {
+    let children: VChild[] | undefined = undefined;
+
+    while (activeStack.length > from) {
+      const item = activeStack.pop();
+      if (!item || !item.type.render) break;
+
+      children = combineChildren(item.content, children);
+
+      const node = item.type.render(item.attributes, children, editor, forHTML)
+      if (node) {
+        nodeFormatType.set(node, item.type); // Store for merging
+        children = [node];
+      }
+    }
+
+    if (children) {
+      if (activeStack.length === 0) {
+        // The stack is fully collapsed and can be appended to the final list
+        inlineChildren.push.apply(inlineChildren, children);
+      } else {
+        // The stack is not yet fully collapsed.
+        // Collapsed child gets placed in its parent.
+        const last = activeStack[activeStack.length - 1];
+        if (last.content) {
+          last.content.push.apply(last.content, children)
+        } else {
+          last.content = children
+        }
+      }
+    }
+  }
+
+  // Consideres the type and attributes at a given index, collapsing the stack if necessary
+  function insertStackItem(index: number, type: FormatType, attributes: AttributeMap) {
+    const active = activeStack[index];
+    if (active) {
+      if (active.type === type && isEqual(active.attributes[active.type.name], attributes[type.name])) {
+        // A new item would match the existing item
+        // Nothing needs to happen
+        return;
+      } else {
+        // The new information conflicts and will be a new node.
+        collapseStack(index);
+      }
+    }
+
+    activeStack.push({ type, attributes })
+  }
 
   delta.ops.forEach((op, i, array) => {
     let children: VChild[] = [];
+    
     if (typeof op.insert === 'string') {
       const prev = array[i - 1];
       const next = array[i + 1];
@@ -221,24 +284,31 @@ export function renderInline(editor: Editor, delta: Delta, forHTML?: boolean) {
     }
 
     if (op.attributes) {
+      let stackIndex = 0;
       // Sort them by the order found in formats
-      Object.keys(op.attributes).sort((a, b) => formats.priority(b) - formats.priority(a)).forEach(name => {
+      const sortedKeys = Object.keys(op.attributes).sort((a, b) => formats.priority(a) - formats.priority(b));
+      // Add each renderable type to the stack
+      sortedKeys.forEach((name, index) => {
         const type = formats.get(name);
         if (type?.render) {
-          const node = type.render(op.attributes as AttributeMap, children, editor, forHTML);
-          if (node) {
-            nodeFormatType.set(node, type); // Store for merging
-            children = [ node ];
-          }
+          insertStackItem(stackIndex, type, op.attributes as AttributeMap);
+          stackIndex++;
         }
       });
-    }
 
-    inlineChildren.push.apply(inlineChildren, children);
+      const last = activeStack[activeStack.length - 1];
+      if (last) {
+        // Append the new children to any existing children in the last stack item
+        last.content = combineChildren(last.content, children);
+      }
+    } else {
+      collapseStack();
+      inlineChildren = combineChildren(inlineChildren, children);
+    }
   });
 
-  // Merge marks to optimize
-  inlineChildren = mergeChildren(inlineChildren);
+  if (activeStack.length > 0) collapseStack();
+
   if (trailingBreak) inlineChildren.push(BR);
 
   return inlineChildren;
@@ -263,35 +333,39 @@ function getLineType(editor: Editor, line: Line): LineType {
   return type;
 }
 
+// Appends a new child to a list, merging where appropriate
+function addOrMergeChild(list: VChild[], newChild: VChild) {
+  if (list.length > 0) {
+    const index = list.length - 1;
+    const last = list[index];
 
-
-// Joins adjacent mark nodes
-function mergeChildren(oldChildren: VChild[]) {
-  const children: VChild[] = [];
-  oldChildren.forEach((next, i) => {
-    const index = children.length - 1;
-    const prev = children[index];
-
-    if (prev && typeof prev !== 'string' && typeof next !== 'string' && nodeFormatType.has(prev) &&
-      nodeFormatType.get(prev) === nodeFormatType.get(next) && isEqual(prev.props, next.props))
+    if (typeof last !== 'string' && typeof newChild !== 'string'
+      && last.type === newChild.type && isEqual(last.props, newChild.props))
     {
-      prev.children = prev.children.concat(next.children);
-    } else if (prev && typeof prev === 'string' && typeof next === 'string') {
-      children[index] += next; // combine adjacent text nodes
-    } else {
-      children.push(next);
-      if (prev && typeof prev !== 'string' && prev.children) {
-        prev.children = mergeChildren(prev.children);
-      }
-    }
-  });
-  if (children.length) {
-    const last = children[children.length - 1];
-    if (last && typeof last !== 'string' && last.children) {
-      last.children = mergeChildren(last.children);
+      // Join elements that match
+      last.children = last.children.concat(newChild.children);
+      return;
+    } else if (typeof last === 'string' && typeof newChild === 'string') {
+      // Combine adjacent text nodes
+      list[index] = last + newChild;
+      return;
     }
   }
-  return children;
+  
+  list.push(newChild)
+}
+
+// Combines two child lists into one, accounting for either being undefined
+function combineChildren(a: VChild[] | undefined, b: VChild[] | undefined): VChild[] {
+  if (!a && !b) return [];
+  if (!a) return b ?? [];
+  if (!b) return a ?? [];
+  
+  // merge in b into a
+  for (const item of b) {
+    addOrMergeChild(a, item);
+  }
+  return a;
 }
 
 function startsWithSpace(op: Op) {
