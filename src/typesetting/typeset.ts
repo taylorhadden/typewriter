@@ -75,6 +75,8 @@ export interface BasicType {
 
 export interface FormatType extends BasicType {
   greedy?: boolean;
+
+  postProcess?: (node: VNode) => VNode
 }
 
 export interface EmbedType extends BasicType {

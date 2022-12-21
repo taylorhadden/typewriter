@@ -1,12 +1,12 @@
 import { isEqual, TextDocument, AttributeMap, Line, EditorRange, Delta, Op } from '@typewriter/document';
 import { h, patch, VChild, VNode } from './vdom';
 import Editor from '../Editor';
-import { LineType } from '../typesetting/typeset';
+import { FormatType, LineType } from '../typesetting/typeset';
 import { applyDecorations } from '../modules/decorations';
 
 const EMPTY_ARR = [];
 const BR = h('br', {});
-const nodeFormatType = new WeakMap();
+const nodeFormatType = new WeakMap<VNode, FormatType>();
 const linesType = new WeakMap<AttributeMap, LineType>();
 const linesMultiples = new WeakMap<Line, Line[]>();
 const linesCombined = new WeakMap<Line[], CombinedData>();
@@ -282,6 +282,10 @@ function mergeChildren(oldChildren: VChild[]) {
       children.push(next);
       if (prev && typeof prev !== 'string' && prev.children) {
         prev.children = mergeChildren(prev.children);
+        const prevType = nodeFormatType.get(prev)
+        if (prevType?.postProcess) {
+          prevType.postProcess(prev);
+        }
       }
     }
   });
@@ -289,6 +293,10 @@ function mergeChildren(oldChildren: VChild[]) {
     const last = children[children.length - 1];
     if (last && typeof last !== 'string' && last.children) {
       last.children = mergeChildren(last.children);
+      const lastType = nodeFormatType.get(last)
+      if (lastType?.postProcess) {
+        lastType.postProcess(last);
+      }
     }
   }
   return children;
