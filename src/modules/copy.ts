@@ -7,9 +7,13 @@ const defaultOptions: CopyOptions = {
   copyHTML: true
 }
 
+type GetCopyRangeFunc = (editor: Editor, event?: ClipboardEvent) => EditorRange
+
 export interface CopyOptions {
   copyPlainText?: boolean;
   copyHTML?: boolean;
+  /** Allows for customization of the editor range when copying */
+  getCopyRange?: GetCopyRangeFunc
 }
 
 export interface CopyData {
@@ -22,6 +26,8 @@ const empty = { text: '', html: '' };
 
 export function copy(editor: Editor, options: CopyOptions = defaultOptions) {
 
+  const getCopyRange = options.getCopyRange
+
   function getCopy(selection?: EditorRange) {
     const { doc } = editor;
     const range = normalizeRange(selection || doc.selection as EditorRange);
@@ -32,7 +38,9 @@ export function copy(editor: Editor, options: CopyOptions = defaultOptions) {
       .map(op => typeof op.insert === 'string' ? op.insert : ' ')
       .join('');
     let html: string;
-    if (text.includes('\n')) {
+    if (!options.copyHTML) {
+      html = ''
+    } else if (text.includes('\n')) {
       slice.push({ insert: '\n', attributes: doc.getLineFormat(range[1]) });
       html = docToHTML(editor, new TextDocument(slice));
     } else {
@@ -46,7 +54,8 @@ export function copy(editor: Editor, options: CopyOptions = defaultOptions) {
     event.preventDefault();
     const dataTransfer = event.clipboardData;
     if (!dataTransfer) return;
-    const { text, html } = getCopy();
+    const range = getCopyRange ? getCopyRange(editor, event) : editor.doc.selection
+    const { text, html } = getCopy(range);
     if (options.copyHTML && html) {
       dataTransfer.setData('text/html', html);
     }
