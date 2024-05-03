@@ -186,6 +186,7 @@ export function input(editor: Editor) {
 
   return {
     allowComposition: setCompositionEnabled,
+    isComposing: () => isComposing,
     init() {
       editor.root.addEventListener('input', onInput);
       editor.on('rendering', onRendering);
