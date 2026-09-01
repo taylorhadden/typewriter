@@ -75,6 +75,22 @@ export function render(editor: Editor, doc: TextDocument) {
   editor.dispatchEvent(new Event('rendered'));
 }
 
+function getLine(combined: CombinedEntry, index: number): Line | undefined {
+  if (Array.isArray(combined)) return combined.at(index)
+  return combined
+}
+
+function shouldExtendRanges(oldRange: EditorRange, newRange: EditorRange, oldC: Combined, newC: Combined) {
+  if (!isEqual(oldRange, newRange)) return true
+
+  const [start, end] = oldRange
+
+  return (
+    getLine(oldC[start], 0)?.id !== getLine(newC[start], 0)
+    || getLine(oldC[end], -1)?.id !== getLine(newC[end], -1)
+  )
+}
+
 export function renderChanges(editor: Editor, oldDoc: TextDocument, newDoc: TextDocument) {
   const { root } = editor;
   // Ranges of line indexes, not document indexes
@@ -82,8 +98,9 @@ export function renderChanges(editor: Editor, oldDoc: TextDocument, newDoc: Text
   const newCombined = combineLines(editor, newDoc.lines).combined;
   const [oldRange, newRange] = getChangedRanges(oldCombined, newCombined);
 
-  // If the changes include added or deleted lines, expand ranges by 1 on each side to ensure the vdom can rerender
-  if (!isEqual(oldRange, newRange)) {
+  // If necessary, expand ranges by 1 on each side to ensure the vdom can rerender
+  // The vdom needs solid line anchors, so this will also extend when leading or trailing line ids differ
+  if (shouldExtendRanges(oldRange, newRange, oldCombined, newCombined)) {
     oldRange[0] = Math.max(0, oldRange[0] - 1);
     newRange[0] = Math.max(0, newRange[0] - 1);
     oldRange[1] = Math.min(oldCombined.length, oldRange[1] + 1);
