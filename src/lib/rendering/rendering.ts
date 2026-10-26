@@ -80,7 +80,7 @@ function getLine(combined: CombinedEntry, index: number): Line | undefined {
   return combined
 }
 
-function shouldExtendRanges(oldRange: EditorRange, newRange: EditorRange, oldC: Combined, newC: Combined) {
+export function shouldExtendRanges(oldRange: EditorRange, newRange: EditorRange, oldC: Combined, newC: Combined) {
   if (!isEqual(oldRange, newRange)) return true
 
   const [start, end] = oldRange
