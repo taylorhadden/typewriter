@@ -52,6 +52,10 @@
   "svelte": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
+  "imports": {
+    "#lib": "./src/lib/index.ts",
+    "#lib/*": "./src/lib/*"
+  },
   "dependencies": {
     "@popperjs/core": "^2.11.8",
     "@typewriter/document": "^0.9.3",
@@ -61,10 +65,10 @@
     "svelte": ">=3.43.0 <6"
   },
   "devDependencies": {
-    "@sveltejs/adapter-auto": "^7.0.0",
-    "@sveltejs/kit": "^2.5.25",
-    "@sveltejs/package": "^2.5.7",
-    "@sveltejs/vite-plugin-svelte": "^6.2.1",
+    "@sveltejs/adapter-auto": "^8.0.0",
+    "@sveltejs/kit": "^3.1.0",
+    "@sveltejs/package": "^3.0.1",
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tsconfig/svelte": "^5.0.4",
     "@types/fast-diff": "^1.2.0",
     "jsdom": "^24.1.0",
@@ -73,17 +77,17 @@
     "prettier-plugin-svelte": "^3.2.6",
     "publint": "^0.2.10",
     "raw-loader": "^4.0.2",
-    "svelte": "^5.46.1",
-    "svelte-check": "^4.3.5",
+    "svelte": "^5.57.1",
+    "svelte-check": "^4.7.7",
     "svelte-loader": "^3.2.3",
-    "svelte-preprocess": "^6.0.2",
+    "svelte-preprocess": "^6.0.5",
     "svelte-routing": "^2.13.0",
     "ts-loader": "^9.5.1",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "tslib": "^2.7.0",
-    "typescript": "^5.5.4",
-    "vite": "^7.3.0",
-    "vitest": "^4.0.16"
+    "typescript": "^6.0.3",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
   }
 }

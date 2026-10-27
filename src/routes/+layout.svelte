@@ -1,10 +1,13 @@
 <script lang="ts">
-  import { page } from '$app/stores';
+  import type { Snippet } from 'svelte';
+  import { page } from '$app/state';
 
-  $: path = $page.url.pathname;
+  let { children }: { children: Snippet } = $props();
+
+  const path = $derived(page.url.pathname);
   const fullScreenRoutes = new Set(['/medium-images']);
 
-  $: fullScreen = fullScreenRoutes.has(path);
+  const fullScreen = $derived(fullScreenRoutes.has(path));
 </script>
 
 <div class="app">
@@ -31,7 +34,7 @@
     {/if}
 
     <div class="app-content" class:full-width={fullScreen}>
-      <slot></slot>
+      {@render children()}
       <!-- <Route path="/" component={Basic}/>
           <Route path="/custom-root" component={CustomRoot}/>
           <Route path="/toolbar" component={Toolbar}/>

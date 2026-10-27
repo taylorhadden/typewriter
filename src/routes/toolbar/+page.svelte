@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Editor, Root, Toolbar } from '$lib';
+  import { Editor, Root, Toolbar } from '#lib';
 
   const editor = (globalThis.editor = new Editor());
 </script>

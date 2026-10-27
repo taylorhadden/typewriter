@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Editor, Root, smartEntry, smartQuotes } from '$lib';
+  import { Editor, Root, smartEntry, smartQuotes } from '#lib';
 
   const editor = (globalThis.editor = new Editor({
     modules: { smartEntry: smartEntry(), smartQuotes },

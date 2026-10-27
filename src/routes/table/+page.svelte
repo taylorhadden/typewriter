@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { type AttributeMap, Editor, h, Root } from '$lib';
+  import { type AttributeMap, Editor, h, Root } from '#lib';
 
   const editor = (globalThis.editor = new Editor());
   editor.typeset.lines.add({

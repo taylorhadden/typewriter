@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Editor, InlineMenu, Root } from '$lib';
+  import { Editor, InlineMenu, Root } from '#lib';
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
 

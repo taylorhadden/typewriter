@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { asRoot, type AttributeMap, BubbleMenu, Editor, h, InlineMenu } from '$lib';
+  import { asRoot, type AttributeMap, BubbleMenu, Editor, h, InlineMenu } from '#lib';
   import { onMount } from 'svelte';
   import { fade } from 'svelte/transition';
 

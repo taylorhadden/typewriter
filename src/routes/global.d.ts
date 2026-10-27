@@ -1,4 +1,4 @@
-import { Editor } from '$lib';
+import { Editor } from '#lib';
 
 declare global {
   var editor: Editor;

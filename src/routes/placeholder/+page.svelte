@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { asRoot, Editor, placeholder } from '$lib';
+  import { asRoot, Editor, placeholder } from '#lib';
 
   let alignment = 'left';
   let valignment = 'top';

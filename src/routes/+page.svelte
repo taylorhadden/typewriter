@@ -1,6 +1,6 @@
 <script lang="ts">
-  import { Editor } from '$lib/Editor';
-  import Root from '$lib/Root.svelte';
+  import { Editor } from '#lib/Editor.ts';
+  import Root from '#lib/Root.svelte';
 
   const editor = (globalThis.editor = new Editor());
 </script>

@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { asRoot, Editor, virtualRendering } from '$lib';
+  import { asRoot, Editor, virtualRendering } from '#lib';
   import text from './fillerText.txt?raw';
 
   const editor = (globalThis.editor = new Editor({

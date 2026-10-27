@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { asRoot, BubbleMenu, Editor } from '$lib';
+  import { asRoot, BubbleMenu, Editor } from '#lib';
   import { onMount } from 'svelte';
 
   const editor = (globalThis.editor = new Editor());
